@@ -32,34 +32,46 @@ const firstPromise = new Promise((resolve, reject) => {
   });
 });
 
-const secondPromise = new Promise((resolve, reject) => {
-  document.addEventListener('click', (e) => {
-    leftC = true;
-    resolve('Second promise was resolved');
-  });
+const secondPromise = new Promise((resolve) => {
+  let resolved = false;
 
-  document.addEventListener('contextmenu', (e) => {
-    rightC = true;
-    resolve('Second promise was resolved');
-  });
+  const handler = (e) => {
+    if ((e.type === 'click' || e.type === 'contextmenu') && !resolved) {
+      resolved = true;
+      resolve('Second promise was resolved');
+      document.removeEventListener('click', handler);
+      document.removeEventListener('contextmenu', handler);
+    }
+  };
+
+  document.addEventListener('click', handler);
+  document.addEventListener('contextmenu', handler);
 });
 
-const thirdPromise = new Promise((resolve, reject) => {
-  document.addEventListener('click', (e) => {
+const thirdPromise = new Promise((resolve) => {
+  let resolved = false;
+
+  const checkAndResolve = () => {
+    if (leftC && rightC && !resolved) {
+      resolved = true;
+      resolve('Third promise was resolved');
+      document.removeEventListener('click', clickHandler);
+      document.removeEventListener('contextmenu', contextmenuHandler);
+    }
+  };
+
+  const clickHandler = () => {
     leftC = true;
+    checkAndResolve();
+  };
 
-    if (leftC && rightC) {
-      resolve('Third promise was resolved');
-    }
-  });
-
-  document.addEventListener('contextmenu', (e) => {
+  const contextmenuHandler = () => {
     rightC = true;
+    checkAndResolve();
+  };
 
-    if (leftC && rightC) {
-      resolve('Third promise was resolved');
-    }
-  });
+  document.addEventListener('click', clickHandler);
+  document.addEventListener('contextmenu', contextmenuHandler);
 });
 
 firstPromise.then(successHandler).catch(errorHandler);
